@@ -1,13 +1,28 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/0xMishra/vault/internal/parser"
 )
 
 var _ = net.Listen
 var _ = os.Exit
+
+func handleConnections(conn net.Conn) {
+	for {
+		reader := bufio.NewReader(conn)
+		b, err := parser.RespParser(reader)
+		if err != nil {
+			fmt.Println("Error reading commands: ", err.Error())
+			os.Exit(1)
+		}
+		conn.Write([]byte(b))
+	}
+}
 
 func main() {
 	fmt.Println("Logs from your program will appear here!")
@@ -17,9 +32,14 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-	_, err = l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connections: ", err.Error())
+			os.Exit(1)
+		}
+
+		go handleConnections(conn)
 	}
 }

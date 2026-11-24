@@ -1,26 +1,26 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
-
-	"github.com/0xMishra/vault/internal/parser"
 )
 
 var _ = net.Listen
 var _ = os.Exit
 
 func handleConnections(conn net.Conn) {
+	defer conn.Close()
+	buf := make([]byte, 1024)
 	for {
-		reader := bufio.NewReader(conn)
-		b, err := parser.RespParser(reader)
+
+		_, err := conn.Read(buf)
+
 		if err != nil {
 			fmt.Println("Error reading commands: ", err.Error())
 			os.Exit(1)
 		}
-		conn.Write([]byte(b))
+		conn.Write([]byte("+OK\r\n"))
 	}
 }
 
